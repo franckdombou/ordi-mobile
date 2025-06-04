@@ -89,7 +89,7 @@ const Page = () => {
           </AnimatedTouchableOpacity>
         )}
 
-        {openCard == 0 && <Text style={styles.cardHeader}>Where to?</Text>}
+        {openCard == 0 && <Text style={styles.cardHeader}>Recherchez?</Text>}
         {openCard == 0 && (
           <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.cardBody}>
             <View style={styles.searchSection}>

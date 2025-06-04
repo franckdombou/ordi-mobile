@@ -8,33 +8,19 @@ import { Link } from 'expo-router';
 
 const categories = [
   {
-    name: 'Tiny homes',
+    name: 'Appartements',
     icon: 'home',
   },
   {
-    name: 'Cabins',
+    name: 'Villa',
     icon: 'house-siding',
   },
   {
-    name: 'Trending',
+    name: 'Studio',
     icon: 'local-fire-department',
   },
-  {
-    name: 'Play',
-    icon: 'videogame-asset',
-  },
-  {
-    name: 'City',
-    icon: 'apartment',
-  },
-  {
-    name: 'Beachfront',
-    icon: 'beach-access',
-  },
-  {
-    name: 'Countryside',
-    icon: 'nature-people',
-  },
+
+
 ];
 
 interface Props {
@@ -67,8 +53,8 @@ const ExploreHeader = ({ onCategoryChanged }: Props) => {
               <View style={styles.searchBtn}>
                 <Ionicons name="search" size={24} />
                 <View>
-                  <Text style={{ fontFamily: 'mon-sb' }}>Where to?</Text>
-                  <Text style={{ color: Colors.grey, fontFamily: 'mon' }}>Anywhere · Any week</Text>
+                  <Text style={{ fontFamily: 'mon-sb' }}>Recherchez</Text>
+                  <Text style={{ color: Colors.grey, fontFamily: 'mon' }}>n'importe ou</Text>
                 </View>
               </View>
             </TouchableOpacity>

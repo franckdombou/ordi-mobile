@@ -39,7 +39,7 @@ const Listings = ({ listings: items, refresh, category }: Props) => {
 
   // Render one listing row for the FlatList
   const renderRow: ListRenderItem<any> = ({  item }) => (
-    <Link href={`/listing/${item.id}`} asChild>
+    <Link href={`/listing/${item.id}`}  asChild>
       <TouchableOpacity>
         <Animated.View style={styles.listing} entering={FadeInRight} exiting={FadeOutLeft}>
           <Animated.Image source={{ uri: item.medium_url }} style={styles.image} />
@@ -55,8 +55,8 @@ const Listings = ({ listings: items, refresh, category }: Props) => {
           </View>
           <Text style={{ fontFamily: 'mon' }}>{item.room_type}</Text>
           <View style={{ flexDirection: 'row', gap: 4 }}>
-            <Text style={{ fontFamily: 'mon-sb' }}>€ {item.price}</Text>
-            <Text style={{ fontFamily: 'mon' }}>night</Text>
+            <Text style={{ fontFamily: 'mon-sb' }}>{item.price} fcfa</Text>
+            <Text style={{ fontFamily: 'mon' }}>mois</Text>
           </View>
         </Animated.View>
       </TouchableOpacity>
