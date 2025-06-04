@@ -13,6 +13,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { defaultStyles } from '@/constants/Styles';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { useEffect, useState } from 'react';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebaseConfig'; // adapte le chemin
+
 
 
 
@@ -20,10 +24,65 @@ const { width } = Dimensions.get('window');
 const IMG_HEIGHT = 300;
 
 const DetailsPage = () => {
-  const { id } = useLocalSearchParams();
-  const listing = (listingsData as any[]).find((item) => item.id === id);
+  //const { id } = useLocalSearchParams();
+  const params = useLocalSearchParams();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  //const listing = (listingsData as any[]).find((item) => item.id === id);
   const navigation = useNavigation();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const [item, setItem] = useState<any>({});
+  const [listing, setListing] = useState<any>({});
+
+
+  useEffect(() => {
+    if (id) {
+      const fetchItem = async () => {
+        const docRef = doc(db, 'products', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setListing(transformToListing({ id: docSnap.id, ...docSnap.data() }))
+          setItem({ id: docSnap.id, ...docSnap.data() });
+        }
+      };
+      fetchItem();
+    }
+  }, [id]);
+
+  function transformToListing(item: any) {
+    const pricePerMonth = parseFloat(item.Prix_par_mois) || 0;
+    const pricePerNight = pricePerMonth > 0 ? (pricePerMonth / 30).toFixed(2) : "N/A";
+  
+    // Construire une URL de listing simple (exemple fictif)
+    const listingUrl = `https://myapp.example.com/listings/${item.id}`;
+  
+    return {
+      id: item.id,
+      name: item.Titre || "Nom non disponible",
+      smart_location: [item.Quartier, item.Secteur, item.Nom_de_la_cite]
+        .filter(Boolean)
+        .join(', '),
+      room_type: item.Categorie || "Type inconnu",
+      bedrooms: parseInt(item.Nombre_de_chambres, 10) || 0,
+      bathrooms: parseInt(item.Nombre_de_salles_de_bain, 10) || 0,
+      guests_included: parseInt(item.Nombre_de_chambres, 10) || 1,  // Exemple: 1 par chambre
+      price: pricePerMonth,
+      pricePerNight,  // tu peux ajouter ce champ si besoin
+      description: item.Description || "Pas de description",
+      xl_picture_url: item.img || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
+      medium_url: item.img || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
+      listing_url: listingUrl,
+      host_name: item.Numero_Agent_Immobilier || "Agent inconnu",
+      host_picture_url: item.img2 || "",  // image de l'agent
+      host_since: "2020",  // Valeur statique ou à adapter si tu as la data
+      review_scores_rating: 80,  // Valeur par défaut ou à adapter
+      number_of_reviews: 10,  // Valeur par défaut ou à adapter
+      geolocation: {
+        lon: item.Longitude || 11.1500,
+        lat: item.Latitude || 2.9000,
+      },
+    };
+  }
+  
 
   const shareListing = async () => {
     try {
@@ -95,24 +154,25 @@ const DetailsPage = () => {
         ref={scrollRef}
         scrollEventThrottle={16}>
         <Animated.Image
-          source={{ uri: listing.xl_picture_url }}
+          source={{ uri: listing?.xl_picture_url || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5"}}
           style={[styles.image, imageAnimatedStyle]}
           resizeMode="cover"
         />
+        
 
         <View style={styles.infoContainer}>
           <Text style={styles.name}>{listing.name}</Text>
           <Text style={styles.location}>
-            {listing.room_type} in {listing.smart_location}
+            {listing.room_type} a {listing.smart_location}
           </Text>
           <Text style={styles.rooms}>
-            {listing.guests_included} guests · {listing.bedrooms} bedrooms · {listing.beds} bed ·{' '}
-            {listing.bathrooms} bathrooms
+            {listing.guests_included} salon · {listing.bedrooms} Chambres ·{' '}
+            {listing.bathrooms} Douches
           </Text>
           <View style={{ flexDirection: 'row', gap: 4 }}>
             <Ionicons name="star" size={16} />
             <Text style={styles.ratings}>
-              {listing.review_scores_rating / 20} · {listing.number_of_reviews} reviews
+              {listing.review_scores_rating / 20} · {listing.number_of_reviews} notes
             </Text>
           </View>
           <View style={styles.divider} />
@@ -121,8 +181,8 @@ const DetailsPage = () => {
             <Image source={{ uri: listing.host_picture_url }} style={styles.host} />
 
             <View>
-              <Text style={{ fontWeight: '500', fontSize: 16 }}>Hosted by {listing.host_name}</Text>
-              <Text>Host since {listing.host_since}</Text>
+              <Text style={{ fontWeight: '500', fontSize: 16 }}>La ville D'Ebolowa</Text>
+              <Text>Construite depuis 01-01-2024</Text>
             </View>
           </View>
 
@@ -136,8 +196,8 @@ const DetailsPage = () => {
         <View
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <TouchableOpacity style={styles.footerText}>
-            <Text style={styles.footerPrice}>€{listing.price}</Text>
-            <Text>night</Text>
+            <Text style={styles.footerPrice}>{listing.price} fcfa</Text>
+            <Text>mois</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 20 }]}>
