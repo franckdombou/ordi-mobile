@@ -16,7 +16,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig'; // adapte le chemin
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+//import { db } from '@/lib/firebaseConfig'; // adapte ce chemin à ton projet
+import { Alert } from 'react-native';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 
+import {  getDocs, query, where } from 'firebase/firestore';
 
 
 
@@ -32,6 +37,7 @@ const DetailsPage = () => {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const [item, setItem] = useState<any>({});
   const [listing, setListing] = useState<any>({});
+  const [idUser, setIdUser] = useState("");
 
 
   useEffect(() => {
@@ -146,6 +152,59 @@ const DetailsPage = () => {
     };
   }, []);
 //{/*<GestureHandlerRootView style={{ flex: 1 }}>*/}
+
+const { user } = useUser();
+
+const reserveListing = async (listing:any) => {
+  try {
+  
+
+    const ordersRef = collection(db, 'Users');
+
+    const q = query(ordersRef, where('nom', '==', `${user?.firstName} ${user?.lastName}`));
+
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Retourne le premier document trouvé (ou adapte si plusieurs résultats possibles)
+      const doc = querySnapshot.docs[0];
+      setIdUser(doc.id);
+      console.log('User ID:', doc.id);
+      
+
+    if (!user) {
+      Alert.alert("Erreur", "Vous devez être connecté pour réserver.");
+      return;
+    }
+
+    const order = {
+      userId: idUser,
+      userName: `${user?.firstName} ${user?.lastName}`|| '',
+      phoneNumber: user.primaryEmailAddress?.emailAddress || '+237698219893',
+      listingId: listing.id,
+      listingTitle: listing.name,
+      listingLocation: listing.smart_location,
+      listingImage: listing.xl_picture_url,
+      price: listing.price,
+      reservedAt: new Date().toLocaleDateString('fr-FR'),
+    };
+
+    await addDoc(collection(db, 'Orders2'), order);
+
+    Alert.alert('Réservation confirmée', 'Votre réservation a bien été enregistrée.');
+  } 
+}catch (error) {
+  console.error('Erreur de réservation :', error);
+  Alert.alert('Erreur', 'Impossible de réserver la maison.');
+}
+}
+
+
+
+
+
+
+
   return (
      <GestureHandlerRootView style={{ flex: 1 }}>
     <View style={styles.container}>
@@ -200,7 +259,7 @@ const DetailsPage = () => {
             <Text>mois</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 20 }]}>
+          <TouchableOpacity onPress={() => reserveListing(listing)} style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 20 }]}>
             <Text style={defaultStyles.btnText}>Reserve</Text>
           </TouchableOpacity>
         </View>

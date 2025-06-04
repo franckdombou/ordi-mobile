@@ -12,15 +12,13 @@ const categories = [
     icon: 'home',
   },
   {
-    name: 'Villa',
-    icon: 'house-siding',
-  },
-  {
     name: 'Studio',
     icon: 'local-fire-department',
   },
-
-
+  {
+    name: 'Chambres',
+    icon: 'house-siding',
+  },
 ];
 
 interface Props {
@@ -54,7 +52,7 @@ const ExploreHeader = ({ onCategoryChanged }: Props) => {
                 <Ionicons name="search" size={24} />
                 <View>
                   <Text style={{ fontFamily: 'mon-sb' }}>Recherchez</Text>
-                  <Text style={{ color: Colors.grey, fontFamily: 'mon' }}>n'importe ou</Text>
+                  <Text style={{ color: Colors.grey, fontFamily: 'mon' }}>n'importe ou a Ebolowa</Text>
                 </View>
               </View>
             </TouchableOpacity>
