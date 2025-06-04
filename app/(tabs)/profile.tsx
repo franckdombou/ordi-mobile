@@ -15,6 +15,11 @@ import { Ionicons } from '@expo/vector-icons';
 import Colors from '@/constants/Colors';
 import { Link } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+//import { collection, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';import { db } from '@/lib/firebaseConfig'; // adapte le chemin
+
+
+
 
 const Page = () => {
   const { signOut, isSignedIn } = useAuth();
@@ -33,6 +38,7 @@ const Page = () => {
     setFirstName(user.firstName);
     setLastName(user.lastName);
     setEmail(user.emailAddresses[0].emailAddress);
+    addUserToFirestore(user);
   }, [user]);
 
   // Update Clerk user data
@@ -66,6 +72,50 @@ const Page = () => {
       });
     }
   };
+
+
+  const addUserToFirestore = async(user: any)=> {
+    if (!user?.firstName || !user?.lastName || !user?.emailAddresses?.[0]?.emailAddress) {
+      throw new Error('Données utilisateur incomplètes');
+    }
+  
+    const email = user.emailAddresses[0].emailAddress;
+    const usersRef = collection(db, 'Users');
+  
+    try {
+      // Vérifier si l'utilisateur existe déjà
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+  
+      if (!querySnapshot.empty) {
+        const existingUser = querySnapshot.docs[0];
+        console.log('Utilisateur déjà existant avec ID :', existingUser.id);
+        return existingUser.id;
+      }
+  
+      // Ajouter l'utilisateur s'il n'existe pas
+      const docRef = await addDoc(usersRef, {
+        nom: `${user.firstName} ${user.lastName}`, // Utilisation des template literals pour une meilleure lisibilité
+        email: email, // Explicite, ou simplement 'email,' si c'est un raccourci d'objet
+        createdAt: new Date(),
+    
+        // Pour les valeurs par défaut avec l'opérateur OR (||), la valeur par défaut est celle si la première est "falsy" (null, undefined, '', 0, false).
+        // Si la source (user.phoneNumber, user.city, etc.) peut être null ou undefined, c'est utile.
+        // Sinon, si la valeur vient directement de la source, mettez-la directement.
+        telephone: user.phoneNumber || "+237********", // Préférez la donnée réelle si elle existe, sinon la valeur par défaut
+        dateNaissance: user.birthDate || new Date(), // Mieux de vérifier si user.birthDate est valide avant de créer une nouvelle date
+        ville: user.city || "Ebolowa", // Préférez la donnée réelle si elle existe, sinon la valeur par défaut
+        genre: user.gender || "M/F", // Préférez la donnée réelle si elle existe, sinon la valeur par défaut
+        statut: user.status || "Ras", // Préférez la donnée réelle si elle existe, sinon la valeur par défaut
+        metier: user.job || "RAS" // Préférez la donnée réelle si elle existe, sinon la valeur par défaut
+    });
+      console.log('Nouvel utilisateur ajouté avec ID :', docRef.id);
+      return docRef.id;
+    } catch (error) {
+      console.error('Erreur lors du traitement de l’utilisateur :', error);
+      throw error;
+    }
+  }
 
   return (
     <SafeAreaView style={defaultStyles.container}>
