@@ -11,6 +11,7 @@ import * as Location from 'expo-location';
 
 interface Props {
   listings: any;
+  listingNews: any;
 }
 
 const INITIAL_REGION = {
@@ -20,13 +21,14 @@ const INITIAL_REGION = {
   longitudeDelta: 9,
 };
 
-const ListingsMap = memo(({ listings }: Props) => {
+const ListingsMap = memo(({ listings, listingNews }: Props) => {
   const router = useRouter();
   const mapRef = useRef<any>(null);
 
   // When the component mounts, locate the user
   useEffect(() => {
     onLocateMe();
+    console.log("")
   }, []);
 
   // When a marker is selected, navigate to the listing page
@@ -92,7 +94,7 @@ const ListingsMap = memo(({ listings }: Props) => {
         clusterFontFamily="mon-sb"
         renderCluster={renderCluster}>
         {/* Render all our marker as usual */}
-        {listings.features.map((item: any) => (
+        {listingNews.features.map((item: any) => (
           <Marker
             coordinate={{
               latitude: item.properties.latitude,
@@ -100,8 +102,15 @@ const ListingsMap = memo(({ listings }: Props) => {
             }}
             key={item.properties.id}
             onPress={() => onMarkerSelected(item)}>
-            <View style={styles.marker}>
-              <Text style={styles.markerText}> {item.properties.price} fcfa</Text>
+            <View
+              style={[
+                styles.marker,
+                {
+                  backgroundColor:
+                    item.properties.statut === 'Occupé' ? '#FF6B6B' : '#4CD964',
+                },
+              ]}>
+              <Text style={styles.markerText}>{item.properties.price} fcfa</Text>
             </View>
           </Marker>
         ))}

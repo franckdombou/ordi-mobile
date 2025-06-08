@@ -42,6 +42,7 @@ const guestsGropus = [
 const Page = () => {
   const [openCard, setOpenCard] = useState(0);
   const [selectedPlace, setSelectedPlace] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [groups, setGroups] = useState(guestsGropus);
   const router = useRouter();
@@ -95,13 +96,15 @@ const Page = () => {
             <View style={styles.searchSection}>
               <Ionicons style={styles.searchIcon} name="search-outline" size={20} color="#000" />
               <TextInput
-                style={styles.inputField}
-                placeholder="Search destinations"
-                placeholderTextColor={Colors.grey}
-              />
+  style={styles.inputField}
+  placeholder="Trouve un logement"
+  placeholderTextColor={Colors.grey}
+  value={searchQuery}
+  onChangeText={setSearchQuery}
+/>
             </View>
 
-            <ScrollView
+             {/*<ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.placesContainer}>
@@ -114,12 +117,13 @@ const Page = () => {
                   <Text style={{ fontFamily: 'mon', paddingTop: 6 }}>{item.title}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </ScrollView>*/}
+
           </Animated.View>
         )}
       </View>
 
-      {/* When */}
+      {/* When 
       <View style={styles.card}>
         {openCard != 1 && (
           <AnimatedTouchableOpacity
@@ -147,9 +151,9 @@ const Page = () => {
      
           </Animated.View>
         )}
-      </View>
+      </View>*/}
 
-      {/* Guests */}
+      {/* Guests 
       <View style={styles.card}>
         {openCard != 2 && (
           <AnimatedTouchableOpacity
@@ -223,7 +227,7 @@ const Page = () => {
             ))}
           </Animated.View>
         )}
-      </View>
+      </View>*/}
 
       {/* Footer */}
       <Animated.View style={defaultStyles.footer} entering={SlideInDown.delay(200)}>
@@ -244,7 +248,9 @@ const Page = () => {
 
           <TouchableOpacity
             style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 50 }]}
-            onPress={() => router.back()}>
+            //onPress={() => router.back()}
+            onPress={() => router.push({ pathname: '/', params: { q: searchQuery } })}
+            >
             <Ionicons
               name="search-outline"
               size={24}

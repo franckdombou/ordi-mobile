@@ -16,7 +16,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebaseConfig'; // adapte le chemin
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+//import { db } from '@/lib/firebaseConfig'; // adapte ce chemin à ton projet
+import { Alert } from 'react-native';
+import { useAuth, useUser } from '@clerk/clerk-expo';
 
+import { getDocs, query, where } from 'firebase/firestore';
 
 
 
@@ -32,6 +37,7 @@ const DetailsPage = () => {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const [item, setItem] = useState<any>({});
   const [listing, setListing] = useState<any>({});
+  const [idUser, setIdUser] = useState("");
 
 
   useEffect(() => {
@@ -51,10 +57,10 @@ const DetailsPage = () => {
   function transformToListing(item: any) {
     const pricePerMonth = parseFloat(item.Prix_par_mois) || 0;
     const pricePerNight = pricePerMonth > 0 ? (pricePerMonth / 30).toFixed(2) : "N/A";
-  
+
     // Construire une URL de listing simple (exemple fictif)
     const listingUrl = `https://myapp.example.com/listings/${item.id}`;
-  
+
     return {
       id: item.id,
       name: item.Titre || "Nom non disponible",
@@ -69,6 +75,9 @@ const DetailsPage = () => {
       pricePerNight,  // tu peux ajouter ce champ si besoin
       description: item.Description || "Pas de description",
       xl_picture_url: item.img || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
+      xl_picture_url2: item.img2 || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
+      xl_picture_url3: item.img3 || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
+      xl_picture_url4: item.img4 || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
       medium_url: item.img || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5",
       listing_url: listingUrl,
       host_name: item.Numero_Agent_Immobilier || "Agent inconnu",
@@ -82,7 +91,7 @@ const DetailsPage = () => {
       },
     };
   }
-  
+
 
   const shareListing = async () => {
     try {
@@ -145,67 +154,136 @@ const DetailsPage = () => {
       opacity: interpolate(scrollOffset.value, [0, IMG_HEIGHT / 1.5], [0, 1]),
     };
   }, []);
-//{/*<GestureHandlerRootView style={{ flex: 1 }}>*/}
+  //{/*<GestureHandlerRootView style={{ flex: 1 }}>*/}
+
+  const { user } = useUser();
+
+  const reserveListing = async (listing: any) => {
+    try {
+
+
+      const ordersRef = collection(db, 'Users');
+
+      const q = query(ordersRef, where('nom', '==', `${user?.firstName} ${user?.lastName}`));
+
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        // Retourne le premier document trouvé (ou adapte si plusieurs résultats possibles)
+        const doc = querySnapshot.docs[0];
+        setIdUser(doc.id);
+        console.log('User ID:', doc.id);
+
+
+        if (!user) {
+          Alert.alert("Erreur", "Vous devez être connecté pour réserver.");
+          return;
+        }
+
+        const order = {
+          userId: idUser,
+          userName: `${user?.firstName} ${user?.lastName}` || '',
+          phoneNumber: user.primaryEmailAddress?.emailAddress || '+237698219893',
+          listingId: listing.id,
+          listingTitle: listing.name,
+          listingLocation: listing.smart_location,
+          listingImage: listing.xl_picture_url,
+          price: listing.price,
+          reservedAt: new Date().toLocaleDateString('fr-FR'),
+          idProduct: id,
+          CustomerName: `${user?.firstName} ${user?.lastName}` || '',
+          DateDebut: new Date().toLocaleDateString('fr-FR'),
+          DateFin: new Date().toLocaleDateString('fr-FR'),
+          Montant: listing.price,
+          PaiementMode: "CASH",
+          Statut: "Reservé"
+        };
+
+        await addDoc(collection(db, 'orders'), order);
+
+        Alert.alert('Réservation confirmée', 'Votre réservation a bien été enregistrée.');
+      }
+    } catch (error) {
+      console.error('Erreur de réservation :', error);
+      Alert.alert('Erreur', 'Impossible de réserver la maison.');
+    }
+  }
+
+
+
+
+
+
+
   return (
-     <GestureHandlerRootView style={{ flex: 1 }}>
-    <View style={styles.container}>
-      <Animated.ScrollView
-        contentContainerStyle={{ paddingBottom: 100 }}
-        ref={scrollRef}
-        scrollEventThrottle={16}>
-        <Animated.Image
-          source={{ uri: listing?.xl_picture_url || "https://firebasestorage.googleapis.com/v0/b/sparkdb-22741.appspot.com/o/1748982271224_xd1.jpg?alt=media&token=5a3e46f2-b916-4707-a16d-0660b64c9de5"}}
-          style={[styles.image, imageAnimatedStyle]}
-          resizeMode="cover"
-        />
-        
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <Animated.ScrollView
+          contentContainerStyle={{ paddingBottom: 100 }}
+          ref={scrollRef}
+          scrollEventThrottle={16}>
+          <Animated.ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            style={{ height: IMG_HEIGHT }}
+          >
+            {[listing?.xl_picture_url, listing?.xl_picture_url2, listing?.xl_picture_url3, listing?.xl_picture_url4].map((uri, index) => (
+              <Animated.Image
+                key={index}
+                source={{ uri: uri || "https://default-image-url" }}
+                style={[styles.image, imageAnimatedStyle]}
+                resizeMode="cover"
+              />
+            ))}
+          </Animated.ScrollView>
 
-        <View style={styles.infoContainer}>
-          <Text style={styles.name}>{listing.name}</Text>
-          <Text style={styles.location}>
-            {listing.room_type} a {listing.smart_location}
-          </Text>
-          <Text style={styles.rooms}>
-            {listing.guests_included} salon · {listing.bedrooms} Chambres ·{' '}
-            {listing.bathrooms} Douches
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 4 }}>
-            <Ionicons name="star" size={16} />
-            <Text style={styles.ratings}>
-              {listing.review_scores_rating / 20} · {listing.number_of_reviews} notes
+          <View style={styles.infoContainer}>
+            <Text style={styles.name}>{listing.name}</Text>
+            <Text style={styles.location}>
+              {listing.room_type} a {listing.smart_location}
             </Text>
-          </View>
-          <View style={styles.divider} />
-
-          <View style={styles.hostView}>
-            <Image source={{ uri: listing.host_picture_url }} style={styles.host} />
-
-            <View>
-              <Text style={{ fontWeight: '500', fontSize: 16 }}>La ville D'Ebolowa</Text>
-              <Text>Construite depuis 01-01-2024</Text>
+            <Text style={styles.rooms}>
+              {listing.guests_included} salon · {listing.bedrooms} Chambres ·{' '}
+              {listing.bathrooms} Douches
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              <Ionicons name="star" size={16} />
+              <Text style={styles.ratings}>
+                {listing.review_scores_rating / 20} · {listing.number_of_reviews} notes
+              </Text>
             </View>
+            <View style={styles.divider} />
+
+            <View style={styles.hostView}>
+              <Image source={{ uri: listing.host_picture_url }} style={styles.host} />
+
+              <View>
+                <Text style={{ fontWeight: '500', fontSize: 16 }}>La ville D'Ebolowa</Text>
+                <Text>Construite depuis 01-01-2024</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <Text style={styles.description}>{listing.description}</Text>
           </View>
+        </Animated.ScrollView>
 
-          <View style={styles.divider} />
+        <Animated.View style={defaultStyles.footer} entering={SlideInDown.delay(200)}>
+          <View
+            style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <TouchableOpacity style={styles.footerText}>
+              <Text style={styles.footerPrice}>{listing.price} fcfa</Text>
+              <Text>mois</Text>
+            </TouchableOpacity>
 
-          <Text style={styles.description}>{listing.description}</Text>
-        </View>
-      </Animated.ScrollView>
-
-      <Animated.View style={defaultStyles.footer} entering={SlideInDown.delay(200)}>
-        <View
-          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <TouchableOpacity style={styles.footerText}>
-            <Text style={styles.footerPrice}>{listing.price} fcfa</Text>
-            <Text>mois</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 20 }]}>
-            <Text style={defaultStyles.btnText}>Reserve</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-    </View>
+            <TouchableOpacity onPress={() => reserveListing(listing)} style={[defaultStyles.btn, { paddingRight: 20, paddingLeft: 20 }]}>
+              <Text style={defaultStyles.btnText}>Reserve</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+      </View>
     </GestureHandlerRootView>
   );
 };
@@ -217,7 +295,7 @@ const styles = StyleSheet.create({
   },
   image: {
     height: IMG_HEIGHT,
-    width: width,
+    width: Dimensions.get('window').width,
   },
   infoContainer: {
     padding: 24,

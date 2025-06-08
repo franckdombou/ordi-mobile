@@ -12,7 +12,7 @@ import { collection, getDocs } from "firebase/firestore";
 //import { db} from "../../firebaseConfig"
 //import { useEffect, useState } from "react";
 import { db } from '@/lib/firebaseConfig'; // adapte le chemin
-
+import { useLocalSearchParams } from 'expo-router';
 
 interface Product2 {
   id: string;
@@ -36,6 +36,13 @@ const Page = () => {
   const getoItems = useMemo(() => listingsDataGeo, []);
   const [category, setCategory] = useState<string>('Appartements');
   const [products, setProducts] =  useState<any[]>([]);
+  const [listingsGeo, setListingsGeo] = useState<any>({
+    type: "FeatureCollection",
+    features: [],
+  });
+
+  const searchParams = useLocalSearchParams();
+const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() : '';
 
   /*useEffect(() => {
     const fetchProducts = async () => {
@@ -71,10 +78,71 @@ const Page = () => {
     setCategory(category);
   };
 
-  //////////////////////////////////////////////////
+  /////////////////////////// FILTRE///////////////////////
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+  
+  const fetchProducts = async () => {
+    const querySnapshot = await getDocs(collection(db, 'products'));
+    const productList = querySnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+      };
+    });
+  
+    let filtered = transformToListing(productList); 
+  
+    if (query) {
+      filtered = filtered.filter((item:any) =>
+      //  item.Titre?.toLowerCase().includes(query) ||
+      item.smart_location?.toLowerCase().includes(query) 
+     // item.Secteur?.toLowerCase().includes(query) ||
+      //item.Standing_du_loyer?.toLowerCase().includes(query) ||
+      //  item.smart_location?.toLowerCase().includes(query)
+      );
+   
+    }
+    console.log("querie")
+    console.log(query)
+    console.log(filtered)
+  
+    setProducts(filtered);
+    setListingsGeo(toGeoJSON(filtered));
+  };
+
+  function toGeoJSON(listings: any[]) {
+    return {
+      type: "FeatureCollection",
+      features: listings.map((item) => ({
+        type: "Feature",
+        properties: {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          latitude: parseFloat(item.geolocation.lat),
+          longitude: parseFloat(item.geolocation.lon),
+          statut: item.statut || "Libre", // par défaut
+        },
+        geometry: {
+          type: "Point",
+          coordinates: [
+            parseFloat(item.geolocation.lon),
+            parseFloat(item.geolocation.lat),
+          ],
+        },
+      })),
+    };
+  }
+  
   
 
-  const fetchProducts = async () => {
+  ////////////////////////////////////////////
+  
+
+  const fetchProducts2 = async () => {
     const querySnapshot = await getDocs(collection(db, 'products'));
     const productList: Product[] = querySnapshot.docs.map((doc) => {
       const data = doc.data() as Omit<Product, 'id'>;
@@ -139,7 +207,7 @@ const Page = () => {
           header: () => <ExploreHeader onCategoryChanged={onDataChanged} />,
         }}
       />
-      <ListingsMap listings={getoItems} />
+      <ListingsMap listings={getoItems} listingNews={listingsGeo} />
       <ListingsBottomSheet listings={products} category={category} />
     </View>
   );
