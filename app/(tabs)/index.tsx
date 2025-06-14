@@ -229,9 +229,9 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
     <View style={{ flex: 1, marginTop: 1 }}>
       {/* Define pour custom header */}
       <Stack.Screen
-       // options={{
-        //  header: () => <ExploreHeader onCategoryChanged={onDataChanged} />,
-       // }}
+        options={{
+          header: () => <ExploreHeader onCategoryChanged={onDataChanged} />,
+        }}
       />
       <ListingsMap listings={getoItems} listingNews={listingsGeo} />
       <ListingsBottomSheet listings={products} category={category} onShowMap={handleShowMap} />
