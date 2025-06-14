@@ -31,7 +31,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
@@ -40,10 +47,7 @@
       "router": {},
       "eas": {
         "projectId": "cc8df4d4-f1da-4148-a732-830113642109"
-      
       }
     }
   }
 }
-
-

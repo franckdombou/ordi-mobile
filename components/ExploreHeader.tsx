@@ -8,7 +8,7 @@ import { Link } from 'expo-router';
 
 const categories = [
   {
-    name: 'Chambres',
+    name: 'Chambre',
     icon: 'house-siding',
   },
  
@@ -17,11 +17,15 @@ const categories = [
     icon: 'local-fire-department',
   },
   {
-    name: 'Appartements',
+    name: 'Appartement',
     icon: 'home',
   },
   {
-    name: 'Villas',
+    name: 'Villa',
+    icon: 'house-siding',
+  },
+  {
+    name: 'Maison',
     icon: 'house-siding',
   },
 

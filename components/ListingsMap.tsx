@@ -1,120 +1,90 @@
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import React, { memo, useEffect, useRef } from 'react';
-import { defaultStyles } from '@/constants/Styles';
-import { Marker } from 'react-native-maps';
-//import MapView from 'react-native-map-clustering';
-import MapView from 'react-native-maps';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import Colors from '@/constants/Colors';
+import { View, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
+import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import Colors from '@/constants/Colors';
+import { defaultStyles } from '@/constants/Styles';
 
 interface Props {
   listings: any;
   listingNews: any;
 }
 
-const INITIAL_REGION = {
-  latitude: 37.33,
-  longitude: -122,
-  latitudeDelta: 9,
-  longitudeDelta: 9,
+const INITIAL_REGION: Region = {
+  latitude: 2.9092,
+  longitude: 11.15,
+  latitudeDelta: 0.05,
+  longitudeDelta: 0.05,
 };
 
 const ListingsMap = memo(({ listings, listingNews }: Props) => {
+  const mapRef = useRef<MapView>(null);
   const router = useRouter();
-  const mapRef = useRef<any>(null);
 
-  // When the component mounts, locate the user
   useEffect(() => {
     onLocateMe();
-    console.log("")
+    console.log('listingNews12')
+    console.log(listingNews.features)
   }, []);
 
-  // When a marker is selected, navigate to the listing page
-  const onMarkerSelected = (event: any) => {
-    router.push(`/listing/${event.properties.id}`);
-  };
-
-  // Focus the map on the user's location
   const onLocateMe = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      return;
-    }
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') return;
 
-    let location = await Location.getCurrentPositionAsync({});
-
+    const location = await Location.getCurrentPositionAsync({});
     const region = {
       latitude: location.coords.latitude,
       longitude: location.coords.longitude,
-      latitudeDelta: 7,
-      longitudeDelta: 7,
+      latitudeDelta: 0.05,
+      longitudeDelta: 0.05,
     };
 
-    mapRef.current?.animateToRegion(region);
+    mapRef.current?.animateToRegion(region, 1000);
   };
 
-  // Overwrite the renderCluster function to customize the cluster markers
-  const renderCluster = (cluster: any) => {
-    const { id, geometry, onPress, properties } = cluster;
-
-    const points = properties.point_count;
-    return (
-      <Marker
-        key={`cluster-${id}`}
-        coordinate={{
-          longitude: geometry.coordinates[0],
-          latitude: geometry.coordinates[1],
-        }}
-        onPress={onPress}>
-        <View style={styles.marker}>
-          <Text
-            style={{
-              color: '#000',
-              textAlign: 'center',
-              fontFamily: 'mon-sb',
-            }}>
-            {points}
-          </Text>
-        </View>
-      </Marker>
-    );
+  const onMarkerPress = (item: any) => {
+    router.push(`/listing/${item.properties.id}`);
   };
 
   return (
     <View style={defaultStyles.container}>
       <MapView
         ref={mapRef}
-        animationEnabled={false}
         style={StyleSheet.absoluteFillObject}
+        provider={Platform.OS === 'android' ? PROVIDER_GOOGLE : undefined}
         initialRegion={INITIAL_REGION}
-        clusterColor="#fff"
-        clusterTextColor="#000"
-        clusterFontFamily="mon-sb"
-        renderCluster={renderCluster}>
-        {/* Render all our marker as usual */}
+        showsUserLocation
+        showsMyLocationButton={false}
+      >
         {listingNews.features.map((item: any) => (
           <Marker
+            key={item.properties.id}
             coordinate={{
               latitude: item.properties.latitude,
               longitude: item.properties.longitude,
             }}
-            key={item.properties.id}
-            onPress={() => onMarkerSelected(item)}>
+            onPress={() => onMarkerPress(item)}
+          >
             <View
-              style={[
-                styles.marker,
-                {
-                  backgroundColor:
-                    item.properties.statut === 'Occupé' ? '#FF6B6B' : '#4CD964',
-                },
-              ]}>
-              <Text style={styles.markerText}>{item.properties.price} fcfa</Text>
-            </View>
+  style={[
+    styles.markerContainer,
+    {
+      backgroundColor:
+        item.properties.statut === 'Occupé' ? '#FF6B6B' : '#4CD964',
+    },
+  ]}
+>
+  <Text style={styles.markerTitle} numberOfLines={1}>
+    {item.properties.name}
+  </Text>
+  <Text style={styles.markerPrice}>{item.properties.price.toLocaleString()} FCFA</Text>
+</View>
           </Marker>
         ))}
       </MapView>
+
       <TouchableOpacity style={styles.locateBtn} onPress={onLocateMe}>
         <Ionicons name="navigate" size={24} color={Colors.dark} />
       </TouchableOpacity>
@@ -123,27 +93,21 @@ const ListingsMap = memo(({ listings, listingNews }: Props) => {
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   marker: {
     padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    elevation: 5,
     borderRadius: 12,
+    backgroundColor: '#fff',
+    elevation: 4,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    shadowOffset: {
-      width: 1,
-      height: 10,
-    },
+    shadowOffset: { width: 1, height: 2 },
+    alignItems: 'center',
   },
   markerText: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'mon-sb',
+    color: '#000',
   },
   locateBtn: {
     position: 'absolute',
@@ -156,11 +120,36 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    shadowOffset: {
-      width: 1,
-      height: 10,
-    },
+    shadowOffset: { width: 1, height: 10 },
   },
+
+  markerContainer: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: '#4CD964',
+    maxWidth: 140,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+  },
+  
+  markerTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#fff',
+    textAlign: 'center',
+  },
+  
+  markerPrice: {
+    fontSize: 11,
+    color: '#fff',
+  },
+  
 });
 
 export default ListingsMap;

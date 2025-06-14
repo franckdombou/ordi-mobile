@@ -8,6 +8,7 @@ import Colors from '@/constants/Colors';
 interface Props {
   listings: any[];
   category: string;
+  onShowMap: () => void;
 }
 
 // Bottom sheet that wraps our Listings component
@@ -19,7 +20,15 @@ const ListingsBottomSheet = ({ listings, category }: Props) => {
   const onShowMap = () => {
     bottomSheetRef.current?.collapse();
     setRefresh(refresh + 1);
+    
   };
+
+  const handleShowMapPress = () => {
+    bottomSheetRef.current?.collapse();
+    setRefresh((prev) => prev + 1);
+    onShowMap(); // 🔁 ceci relance fetchProducts dans index.tsx
+  };
+  
 
   return (
     <BottomSheet
@@ -30,9 +39,9 @@ const ListingsBottomSheet = ({ listings, category }: Props) => {
       handleIndicatorStyle={{ backgroundColor: Colors.grey }}
       style={styles.sheetContainer}>
       <View style={styles.contentContainer}>
-        <Listings listings={listings} refresh={refresh} category={category} />
+        <Listings listings={listings} refresh={refresh} category={category}  />
         <View style={styles.absoluteView}>
-          <TouchableOpacity onPress={onShowMap} style={styles.btn}>
+          <TouchableOpacity onPress={handleShowMapPress} style={styles.btn}>
             <Text style={{ fontFamily: 'mon-sb', color: '#fff' }}>Map</Text>
             <Ionicons name="map" size={20} style={{ marginLeft: 10 }} color={'#fff'} />
           </TouchableOpacity>

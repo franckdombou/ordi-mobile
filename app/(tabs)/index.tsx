@@ -79,9 +79,13 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
   };
 
   /////////////////////////// FILTRE///////////////////////
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+ // useEffect(() => {
+  //  fetchProducts();
+  //}, []);
+
+  const handleShowMap = () => {
+    fetchProducts(); // recharge les données depuis Firestore
+  };
   
   const fetchProducts = async () => {
     const querySnapshot = await getDocs(collection(db, 'products'));
@@ -105,8 +109,17 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
       );
    
     }
-    console.log("querie")
-    console.log(query)
+    console.log(filtered)
+
+
+    // ✅ Appliquer le filtre par catégorie ici
+  if (false) {
+    filtered = filtered.filter((item: any) =>
+      item.room_type?.toLowerCase() == category.toLowerCase()
+    );
+  }
+    console.log("category")
+    console.log(category)
     console.log(filtered)
   
     setProducts(filtered);
@@ -151,17 +164,30 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
         ...data,
       };
     });
+
+    let filtered = transformToListing(productList);
+
+    // ✅ Appliquer le filtre par catégorie ici
+  if (category) {
+    filtered = filtered.filter((item: any) =>
+      item.room_type?.toLowerCase() === category.toLowerCase()
+    );
+  }
+
+  
+  setProducts(filtered);
+  setListingsGeo(toGeoJSON(filtered));
     
     console.log(transformToListing(productList))
     console.log("products")
     console.log(productList)
-    setProducts(transformToListing(productList));
+  //  setProducts(transformToListing(productList));
     
   };
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [category]); // <- Ajout de category ici
 
   function transformToListing(dataArray: any[]) {
     return dataArray.map((item: any) => {
@@ -200,15 +226,15 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
   }
 
   return (
-    <View style={{ flex: 1, marginTop: 80 }}>
+    <View style={{ flex: 1, marginTop: 1 }}>
       {/* Define pour custom header */}
       <Stack.Screen
-        options={{
-          header: () => <ExploreHeader onCategoryChanged={onDataChanged} />,
-        }}
+       // options={{
+        //  header: () => <ExploreHeader onCategoryChanged={onDataChanged} />,
+       // }}
       />
       <ListingsMap listings={getoItems} listingNews={listingsGeo} />
-      <ListingsBottomSheet listings={products} category={category} />
+      <ListingsBottomSheet listings={products} category={category} onShowMap={handleShowMap} />
     </View>
   );
 };
