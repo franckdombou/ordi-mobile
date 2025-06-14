@@ -47,7 +47,7 @@ const ListingsMap = memo(({ listings, listingNews }: Props) => {
   const onMarkerPress = (item: any) => {
     router.push(`/listing/${item.properties.id}`);
   };
-
+//
   return (
     <View style={defaultStyles.container}>
       <MapView
