@@ -121,7 +121,7 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
     console.log("category")
     console.log(category)
     console.log(filtered)
-    
+    //
   
     setProducts(filtered.filter((item: any) => item.Statut !== 'Occupé'));
     setListingsGeo(toGeoJSON(filtered));
