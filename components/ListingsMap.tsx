@@ -1,6 +1,6 @@
-import React, { memo, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Marker, PROVIDER_GOOGLE, Region, Callout } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -22,12 +22,13 @@ const INITIAL_REGION: Region = {
 const ListingsMap = memo(({ listings, listingNews }: Props) => {
   const mapRef = useRef<MapView>(null);
   const router = useRouter();
-
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [detail, setDetail]= useState(false)
   useEffect(() => {
     onLocateMe();
-    console.log('listingNews12')
-    console.log(listingNews.features)
-  }, []);
+    console.log('listingNews12');
+    console.log(listingNews.features);
+  }, [detail]);
 
   const onLocateMe = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
@@ -41,13 +42,18 @@ const ListingsMap = memo(({ listings, listingNews }: Props) => {
       longitudeDelta: 0.05,
     };
 
+    setUserLocation({
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+    });
+
     mapRef.current?.animateToRegion(region, 1000);
   };
 
   const onMarkerPress = (item: any) => {
     router.push(`/listing/${item.properties.id}`);
   };
-//
+
   return (
     <View style={defaultStyles.container}>
       <MapView
@@ -58,6 +64,15 @@ const ListingsMap = memo(({ listings, listingNews }: Props) => {
         showsUserLocation
         showsMyLocationButton={false}
       >
+        {/* Marker de la position de l'utilisateur */}
+        {userLocation && (
+          <Marker onPress={()=>setDetail(!detail)} coordinate={userLocation} pinColor="blue">
+            <Callout onPress={()=>setDetail(!detail)}>
+              <Text>Vous êtes ici !</Text>
+            </Callout>
+          </Marker>
+        )}
+
         {listingNews.features.map((item: any) => (
           <Marker
             key={item.properties.id}
@@ -68,19 +83,21 @@ const ListingsMap = memo(({ listings, listingNews }: Props) => {
             onPress={() => onMarkerPress(item)}
           >
             <View
-  style={[
-    styles.markerContainer,
-    {
-      backgroundColor:
-        item.properties.statut === 'Occupé' ? '#FF6B6B' : '#4CD964',
-    },
-  ]}
->
-  <Text style={styles.markerTitle} numberOfLines={1}>
-    {item.properties.name}
-  </Text>
-  <Text style={styles.markerPrice}>{item.properties.price.toLocaleString()} FCFA</Text>
-</View>
+              style={[
+                styles.markerContainer,
+                {
+                  backgroundColor:
+                    item.properties.statut === 'Occupé' ? '#FF6B6B' : '#4CD964',
+                },
+              ]}
+            >
+              <Text style={styles.markerTitle} numberOfLines={1}>
+                {item.properties.name}
+              </Text>
+              <Text style={styles.markerPrice}>
+                {item.properties.price.toLocaleString()} FCFA
+              </Text>
+            </View>
           </Marker>
         ))}
       </MapView>
@@ -122,7 +139,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 1, height: 10 },
   },
-
   markerContainer: {
     paddingVertical: 6,
     paddingHorizontal: 10,
@@ -137,19 +153,16 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
-  
   markerTitle: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
   },
-  
   markerPrice: {
     fontSize: 11,
     color: '#fff',
   },
-  
 });
 
 export default ListingsMap;

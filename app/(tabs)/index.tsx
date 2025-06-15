@@ -137,7 +137,7 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
           price: item.price,
           latitude: parseFloat(item.geolocation.lat),
           longitude: parseFloat(item.geolocation.lon),
-          statut: item.statut || "Libre", // par défaut
+          statut: item.Status || "Libre", // par défaut
         },
         geometry: {
           type: "Point",
