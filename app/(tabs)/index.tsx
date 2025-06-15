@@ -121,8 +121,9 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
     console.log("category")
     console.log(category)
     console.log(filtered)
+    
   
-    setProducts(filtered);
+    setProducts(filtered.filter((item: any) => item.Statut !== 'Occupé'));
     setListingsGeo(toGeoJSON(filtered));
   };
 
@@ -137,7 +138,7 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
           price: item.price,
           latitude: parseFloat(item.geolocation.lat),
           longitude: parseFloat(item.geolocation.lon),
-          statut: item.Status || "Libre", // par défaut
+          statut: item.Statut || "Libre", // par défaut
         },
         geometry: {
           type: "Point",
@@ -200,6 +201,7 @@ const query = typeof searchParams.q === 'string' ? searchParams.q.toLowerCase() 
       return {
         id: item.id,
         name: item.Titre || "Nom non disponible",
+        Statut : item.Statut || 'Libre',
         smart_location: [item.Quartier, item.Secteur, item.Nom_de_la_cite]
           .filter(Boolean)
           .join(', '),
